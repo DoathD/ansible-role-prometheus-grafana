@@ -1,0 +1,93 @@
+---
+# tasks file for install_node_exporter
+
+- name: create group alertmanager
+  ansible.builtin.group:
+    name: alertmanager
+    state: present
+
+- name: create user alertmanager
+  ansible.builtin.user:
+    name: alertmanager
+    group: alertmanager
+
+- name: create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: alertmanager
+    mode: 0755
+  with_items:
+   -  "{{ path_alertmanager_conf }}"
+   -  "{{ path_alertmanager_lib }}"
+   -  "{{ path_alertmanager_temp }}"
+
+
+- name: download alertmanager git
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/alertmanager/releases/download/v{{ version_alertmanager }}/alertmanager-{{ version_alertmanager }}.linux-{{ architecture_alertmanager }}.tar.gz"
+    dest: "{{ path_alertmanager_temp }}"
+
+- name: unzip archieve
+  ansible.builtin.unarchive:
+    src: "{{ path_alertmanager_temp }}/alertmanager-{{ version_alertmanager }}.linux-{{ architecture_alertmanager}}.tar.gz"
+    dest: "{{ path_alertmanager_temp }}"
+    remote_src: yes
+
+- name: copy bin to dir
+  ansible.builtin.copy:
+    src: "{{ path_alertmanager_temp }}/alertmanager-{{ version_alertmanager }}.linux-{{ architecture_alertmanager }}/{{ item }}"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+  with_items:
+    - alertmanager
+    - amtool
+
+- name: copy config to dir
+  ansible.builtin.copy:
+    src: "{{ path_alertmanager_temp }}/alertmanager-{{ version_alertmanager }}.linux-{{ architecture_alertmanager }}/alertmanager.yml"
+    dest: "{{ path_alertmanager_conf }}"
+    remote_src: yes
+
+
+- name: copy alertmanager.service
+  ansible.builtin.copy:
+    src: "alertmanager.service"
+    dest: "/etc/systemd/system/"
+
+- name: change ownership dirs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: alertmanager
+    group: alertmanager
+    mode: 0755
+  with_items:
+    - "{{ path_alertmanager_conf }}"
+    - "{{ path_alertmanager_lib }}"
+
+- name: change ownership bin
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+  with_items:
+    - /usr/local/bin/amtool
+    - /usr/local/bin/alertmanager
+
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd:
+    daemon_reload: yes
+
+- name: enable service alertmanager
+  systemd:
+    name: alertmanager
+    enabled: yes
+
+- name: start service
+  systemd:
+    state: restarted
+    name: alertmanager
+

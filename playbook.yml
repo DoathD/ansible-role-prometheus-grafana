@@ -1,0 +1,15 @@
+---
+  - name: Main playbook
+    hosts: servers
+    become: True
+    
+    roles:
+<<<<<<< HEAD
+#      - install_prometheus
+#      - install_alert_manager 
+#      - install_node_exporter
+      - config_prometheus 
+=======
+      - install_prometheus
+ 
+>>>>>>> 672faf1581a9907d0b6d44f13fdf6e55dad40572

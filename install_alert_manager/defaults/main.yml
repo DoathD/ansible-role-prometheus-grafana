@@ -1,0 +1,9 @@
+---
+# defaults file for install_alert_manager
+path_alertmanager_conf: /etc/alertmanager
+path_prometheus_lib: /var/lib/prometheus
+path_alertmanager_lib: "{{ path_prometheus_lib }}/alertmanager"
+path_alertmanager_temp: /temp/alertmanager
+
+version_alertmanager: 0.24.0
+architecture_alertmanager: amd64

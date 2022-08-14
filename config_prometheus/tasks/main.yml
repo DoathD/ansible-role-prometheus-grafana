@@ -1,0 +1,33 @@
+---
+# tasks file for config_prometheus
+
+
+- name: copy edited nginx node_exporter.service
+  ansible.builtin.copy:
+    src: "node_exporter.service"
+    dest: "/etc/systemd/system/"
+
+- name: copy prometheus.yml to config dir
+  ansible.builtin.copy:
+    src: "prometheus.yml"
+    dest: "{{ path_prometheus_conf }}/prometheus.yml"
+
+- name: copy prometheus.yml to dir
+  ansible.builtin.copy:
+    src: "nginx.rules.yml"
+    dest: "{{ path_prometheus_conf }}"
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd:
+    daemon_reload: yes
+
+- name: restart service node exporter
+  systemd:
+    state: restarted
+    name: node_exporter
+
+
+- name: restart service prometheus
+  systemd:
+    state: restarted
+    name: prometheus

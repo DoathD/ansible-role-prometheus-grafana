@@ -1,0 +1,4 @@
+---
+# defaults file for config_prometheus
+
+path_prometheus_conf: /etc/prometheus

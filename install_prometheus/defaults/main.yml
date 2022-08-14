@@ -1,0 +1,9 @@
+---
+# defaults file for install_prometheus
+path_prometheus_conf: /etc/prometheus
+path_prometheus_lib: /var/lib/prometheus
+path_prometheus_temp: /temp/prometheus
+
+
+version_prometheus: 2.37.0
+architecture_prometheus: amd64

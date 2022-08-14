@@ -1,0 +1,103 @@
+---
+# tasks file for install_prometheus
+- name: create group prometheus
+  ansible.builtin.group:
+    name: prometheus
+    state: present
+
+- name: create user prometheus
+  ansible.builtin.user:
+    name: prometheus
+    group: prometheus
+
+- name: create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: prometheus
+    mode: 0755 
+  with_items:
+   -  "{{ path_prometheus_conf }}" 
+   -  "{{ path_prometheus_lib }}"
+   -  "{{ path_prometheus_temp }}"
+
+
+- name: download prometheus git
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ version_prometheus }}/prometheus-{{ version_prometheus }}.linux-{{ architecture_prometheus }}.tar.gz"
+    dest: "{{ path_prometheus_temp }}"
+
+- name: unzip archieve
+  ansible.builtin.unarchive:
+    src: "{{ path_prometheus_temp }}/prometheus-{{ version_prometheus }}.linux-{{ architecture_prometheus }}.tar.gz"
+    dest: "{{ path_prometheus_temp }}"
+    remote_src: yes
+- name: copy bin to dir
+  ansible.builtin.copy:
+    src: "{{ path_prometheus_temp }}/prometheus-{{ version_prometheus }}.linux-{{ architecture_prometheus}}/{{ item }}"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+  with_items:
+    - prometheus
+    - promtool
+
+- name: copy config to dir
+  ansible.builtin.copy:
+    src: "{{ path_prometheus_temp }}/prometheus-{{ version_prometheus }}.linux-{{ architecture_prometheus }}/{{ item }}"
+    dest: "{{ path_prometheus_conf }}"
+    remote_src: yes
+  with_items:
+    - console_libraries
+    - consoles
+
+
+- name: copy prometheus.yml to dir
+  ansible.builtin.copy:
+<<<<<<< HEAD
+    src: "default_prometheus.yml"
+    dest: "{{ path_prometheus_conf }}/prometheus.yml"
+=======
+    src: "prometheus.yml"
+    dest: "{{ path_prometheus_conf }}"
+>>>>>>> 672faf1581a9907d0b6d44f13fdf6e55dad40572
+
+- name: copy prometheus.service
+  ansible.builtin.copy:
+    src: "prometheus.service"
+    dest: "/etc/systemd/system/"
+
+- name: change ownership dirs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+  with_items:
+    - "{{ path_prometheus_conf }}"
+    - "{{ path_prometheus_lib }}"
+
+- name: change ownership bin
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+  with_items:
+    - /usr/local/bin/prometheus
+    - /usr/local/bin/promtool
+
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd:
+    daemon_reload: yes
+
+- name: enable service prometheus
+  systemd:
+    name: prometheus
+    enabled: yes
+
+- name: start service
+  systemd:
+    state: restarted
+    name: prometheus

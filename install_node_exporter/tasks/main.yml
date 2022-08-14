@@ -1,0 +1,69 @@
+---
+# tasks file for install_node_exporter
+- name: create group node_exporter
+  ansible.builtin.group:
+    name: nodeusr
+    state: present
+
+- name: create user node_exporter
+  ansible.builtin.user:
+    name: nodeusr
+    group: nodeusr
+
+- name: create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: nodeusr
+    mode: 0755 
+  with_items:
+   -  "{{ path_node_exporter_temp }}"
+
+
+- name: download node exporter git
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ version_node_exporter }}/node_exporter-{{ version_node_exporter }}.linux-{{ architecture_node_exporter }}.tar.gz"
+    dest: "{{ path_node_exporter_temp }}"
+
+- name: unzip archieve
+  ansible.builtin.unarchive:
+    src: "{{ path_node_exporter_temp }}/node_exporter-{{ version_node_exporter }}.linux-{{ architecture_node_exporter }}.tar.gz"
+    dest: "{{ path_node_exporter_temp }}"
+    remote_src: yes
+
+- name: copy bin to dir
+  ansible.builtin.copy:
+    src: "{{ path_node_exporter_temp }}/node_exporter-{{ version_node_exporter }}.linux-{{ architecture_node_exporter}}/{{ item }}"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+  with_items:
+    - node_exporter
+
+- name: copy node_exporter.service
+  ansible.builtin.copy:
+    src: "node_exporter.service"
+    dest: "/etc/systemd/system/"
+
+- name: change ownership bin
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: nodeusr
+    group: nodeusr
+    mode: 0755
+  with_items:
+    - /usr/local/bin/node_exporter
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd:
+    daemon_reload: yes
+
+- name: enable service node_exporter
+  systemd:
+    name: node_exporter
+    enabled: yes
+
+- name: start service
+  systemd:
+    state: restarted
+    name: node_exporter

@@ -1,0 +1,9 @@
+---
+# defaults file for install_node_exporter
+
+
+path_node_exporter_temp: /temp/prometheus
+
+
+version_node_exporter: 1.4.0-rc.0
+architecture_node_exporter: amd64
