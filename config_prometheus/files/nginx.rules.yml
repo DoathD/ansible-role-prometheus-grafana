@@ -1,5 +1,5 @@
 groups:
-- name: services.rules
+- name: nginx.service
   rules:
     - alert: nginx_service
       expr: node_systemd_unit_state{name="nginx.service",state="active"} == 0
